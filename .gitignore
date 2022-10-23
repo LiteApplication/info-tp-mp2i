@@ -133,3 +133,5 @@ mp2i-pv/
 
 # Ignore vscode folder
 .vscode/
+
+.fuse_hidden*
