@@ -123,7 +123,7 @@ void affichage(int n)
 // Met en forme la sortie pour utiliser directement gnuplot (voir "Run :" dans l'en-tête)
 void setup_gnuplot()
 {
-  //#run: \> tmp.txt \&& gnuplot -p tmp.txt \&& rm tmp.txt
+  ///#run: \> tmp.txt \&& gnuplot -p tmp.txt \&& rm tmp.txt
   printf("set style data lines\n"
          "set xrange [-0.2:1.2]\n"
          "set yrange [-0.1:0.8]\n"
@@ -156,6 +156,7 @@ int main(void)
   tests_question1();
   tests_question2(); // a decommenter
   setup_gnuplot();
+  //#run: \> /dev/null
   affichage(3); // a decommenter (en commentant les tests precedents)
   return 0;
 }

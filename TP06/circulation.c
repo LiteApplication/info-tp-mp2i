@@ -158,5 +158,6 @@ int main(void)
   tests_question1();
   tests_question2(); // a decommenter
   tests_question3(); // a decommenter
+  //#run: \> /dev/null
   return 0;
 }
