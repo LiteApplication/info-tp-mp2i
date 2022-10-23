@@ -2,11 +2,24 @@
 import argparse
 import datetime
 import os
+import re
+import shlex
 import subprocess
 import tarfile
-import colorama
 import time
-import shlex
+import json
+
+import colorama
+
+_silent = False
+
+
+_print = print
+
+
+def print(*args, **kwargs):
+    if not _silent:
+        _print(*args, **kwargs)
 
 
 def red(*args, end="\n", **kwargs):
@@ -35,6 +48,8 @@ DEFAULT_ARGUMENTS = ["-Wall", "-Wextra", "-Werror", "-Wpedantic", "-O", "-g"]
 BUILD_DIR = "build" + os.sep
 IGNORE_FOLDERS = [".git", ".vscode", "build", "venv", "__pycache__", "mp2i-pv"]
 DEFAULT_PACKAGE_NAME = "Alexis_Rossfelder"
+TP_FOLDER = "/home/alexi/Documents/MP2I/INFO/mp2i-pv/docs/TP2022-2023"
+EMPTY_TP = 3
 
 
 def verbose(*args, level=1, **kwargs):
@@ -46,6 +61,94 @@ def verbose(*args, level=1, **kwargs):
     }
     if debug:
         levels[level](*args, **kwargs)
+
+
+def get_tp_list(path: str):
+    lst = [
+        os.path.join(TP_FOLDER, p)
+        for p in os.listdir(path) + [""] * EMPTY_TP
+        if "TP" in p
+    ]
+    result = [""] * len(lst)
+    not_found = list()
+    for tp in lst:
+        source = ""
+        if os.path.exists(os.path.join(tp, os.path.basename(tp).lower() + ".md")):
+            source = os.path.join(tp, os.path.basename(tp).lower() + ".md")
+        else:
+            files = [f for f in os.listdir(tp) if f.lower().endswith(".md")]
+            if len(files) == 1:
+                source = os.path.join(tp, files[0])
+            else:
+                verbose("Unable to get the source of the TP automatically", level=3)
+        if source != "":
+            if (x := re.match(r"\# TP(\d*) :", open(source).readline())) and int(
+                x.group(1)
+            ) - 1 in range(0, len(lst)):
+                result[int(x.group(1)) - 1] = tp
+            else:
+                not_found.append(tp)
+        else:
+            not_found.append(tp)
+    print(json.dumps(not_found, indent=2), json.dumps(lst, indent=2))
+    for nf in not_found:
+        for i, tp in enumerate(result):
+            if tp == "":
+                result[i] = nf
+                break
+    return result
+
+
+def select_tp(path: str) -> str:
+    lst = get_tp_list(path)
+
+    print("Please select the file to import :")
+    for i, t in enumerate(lst):
+        print(f"\t{i + 1} - {os.path.basename(t).replace('_', ' ')}")
+    try:
+        result = int(input("Select one : "))
+        assert result - 1 in range(0, len(lst))
+    except (KeyboardInterrupt, ValueError, AssertionError):
+        print("\nAborting ...")
+        exit()
+    p = lst[result - 1]
+    if os.path.exists(os.path.join(p, os.path.basename(p).lower() + ".md")):
+        return os.path.join(p, os.path.basename(p).lower() + ".md")
+    else:
+        files = [f for f in os.listdir(p) if f.lower().endswith(".md")]
+        if len(files) == 1:
+            return os.path.join(p, files[0])
+        elif len(files) > 1:
+            print("Please select the file to use :")
+            for i, t in enumerate(files):
+                print(f"\t{i + 1} - {os.path.basename(t)}")
+            try:
+                result = int(input("Select one : "))
+                assert result - 1 in range(0, len(files))
+            except (KeyboardInterrupt, ValueError, AssertionError):
+                print("\nAborting ...")
+                exit()
+            return os.path.join(p, files[result - 1])
+        else:
+            print("No MD file associated with this TP.")
+            return ""
+
+
+def read_md_tp(path: str) -> dict[str, list[str]]:
+    result = dict()
+    current_part = "Introduction"
+    with open(path, "r") as f:
+        for line in f:
+            if x := re.match(r"\#\# (.*) -- ", line):
+                current_part = x.group(1)
+                result[current_part] = []
+            elif x := re.match(r"\[.*(?:\.c|\.h)\]\((.*)\)", line):
+                result[current_part].append(x.group(1))
+    return result
+
+
+# print(read_md_tp(select_tp(TP_FOLDER)))
+# exit()
 
 
 class CFileSingleton(type):
@@ -117,7 +220,7 @@ class CFile(metaclass=CFileSingleton):
 
     def _get_settings(self):
         if not self._valid:
-            return
+            return []
         with open(self.filename, "r") as f:
             for line_num, line in enumerate(f):
                 current_tag = "files:"
@@ -125,6 +228,10 @@ class CFile(metaclass=CFileSingleton):
                 if line.startswith("//#"):  # Ignore commented includes
                     if line.startswith("//#include ") or line.startswith("//#define"):
                         continue
+                    if line.startswith("//#ignore#"):
+                        self._valid = False
+                        verbose("Ignoring", self)
+                        return []
                     line = iter(line.replace("//#", "").strip().split())
                     for word in line:
                         if word.startswith('"'):
@@ -134,7 +241,7 @@ class CFile(metaclass=CFileSingleton):
                                     word += " " + next(line)
                                 except StopIteration:
                                     print(
-                                        f"SyntaxError: '\"' was not closed at {file}:{line_num}"
+                                        f"SyntaxError: '\"' was not closed at {self.basename}:{line_num}"
                                     )
                                     word += '"'
                                     break
@@ -167,6 +274,8 @@ class CFile(metaclass=CFileSingleton):
             if not argument.startswith(("+", "^", "=")):
                 argument = "+" + argument
             tag_list[tag].append(argument)
+        if not self._valid:
+            return
         self._parsed = True
         verbose(f"Parsed {self}")
         if self._files != ["+" + self._provided_name]:
@@ -215,7 +324,10 @@ class CFile(metaclass=CFileSingleton):
                 elif os.path.isfile(argument):
                     command[i] = os.path.basename(argument)
 
-            escaped_run_args = [shlex.quote(arg) for arg in self.run_args()]
+            escaped_run_args = [
+                arg[1:] if arg.startswith("\\") else shlex.quote(arg)
+                for arg in self.run_args()
+            ]
 
             f.write("/*\n")
             f.write(HEADER_SEPARATOR + "\n")
@@ -276,9 +388,17 @@ class CFile(metaclass=CFileSingleton):
             if not self._built:
                 red("Build failed for :", self)
                 return
-        verbose(f"Running {self.out}")
-        code = subprocess.run([self.out] + self.run_args())
-        (red if code.returncode else green)(f"Exited with code : {code.returncode}")
+        if all(False for a in self.run_args() if a.startswith("\\")):
+            verbose(f"Running {self.out}")
+            code = subprocess.run([self.out] + self.run_args()).returncode
+        else:
+            escaped_run_args = [
+                arg[1:] if arg.startswith("\\") else shlex.quote(arg)
+                for arg in self.run_args()
+            ]
+            verbose(f"Running raw command : {self.out}", escaped_run_args)
+            code = os.system(self.out + " " + " ".join(escaped_run_args))
+        (red if code else green)(f"Exited with code : {code}")
 
     def add_header(
         self, author: list[str] | None = None, command: list[str] | None = None
@@ -290,12 +410,12 @@ class CFile(metaclass=CFileSingleton):
             command = self._get_build_command()
         self._insert_header(author, command, True)
 
-    def _get_applied_list(self, lst: list[str]) -> list[str]:
+    def _get_applied_list(self, lst: list[str], deduplicate: bool = True) -> list[str]:
         self._parse()
         applied = []
         for a in lst:
             if a.startswith("+"):
-                if a[1:] not in applied:
+                if not deduplicate or a[1:] not in applied:
                     applied.append(a[1:])
             elif a.startswith("^"):
                 try:
@@ -332,7 +452,7 @@ class CFile(metaclass=CFileSingleton):
         return self._get_applied_list(self._package)
 
     def run_args(self):
-        return self._get_applied_list(self._run_args)
+        return self._get_applied_list(self._run_args, deduplicate=False)
 
     def __repr__(self):
         return f"CFile({self.filename})"
@@ -386,13 +506,19 @@ def parse_args():
         help="The files to be built",
     )
     parser.add_argument(
-        "-H", "--no-header", action="store_true", help="Do not add a header to the files being built"
+        "-H",
+        "--no-header",
+        action="store_true",
+        help="Do not add a header to the files being built",
     )
     parser.add_argument(
         "-B", "--no-build", action="store_true", help="Do not build the file"
     )
     parser.add_argument(
         "-R", "--no-run", action="store_true", help="Do not run the file"
+    )
+    parser.add_argument(
+        "-S", "--silent", action="store_true", help="Show no output from the scrip"
     )
     parser.add_argument(
         "-v", "--verbose", action="store_true", help="Show verbose output"
@@ -402,9 +528,12 @@ def parse_args():
     return parser.parse_args()
 
 
-if __name__ == "__main__":
+def main():
+    global _debug, _silent
     parsed = parse_args()
-    debug = parsed.verbose
+    _debug = parsed.verbose
+
+    _silent = parsed.silent
 
     parsed.files = list(parsed.files)
 
@@ -440,3 +569,7 @@ if __name__ == "__main__":
             cfile.run(not parsed.no_header)
         elif not parsed.no_build:
             cfile.build(not parsed.no_header)
+
+
+if __name__ == "__main__":
+    main()
