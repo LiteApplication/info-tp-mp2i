@@ -396,7 +396,7 @@ class CFile(metaclass=CFileSingleton):
                 arg[1:] if arg.startswith("\\") else shlex.quote(arg)
                 for arg in self.run_args()
             ]
-            verbose(f"Running raw command : {self.out}", escaped_run_args)
+            verbose(f"Running raw command : {self.out}", " ".join(escaped_run_args))
             code = os.system(self.out + " " + " ".join(escaped_run_args))
         (red if code else green)(f"Exited with code : {code}")
 
