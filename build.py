@@ -40,14 +40,14 @@ def gray(*args, end="\n", **kwargs):
     print(colorama.Fore.RESET, end=end)
 
 
-debug = True
+_debug = False
 
 HEADER_SEPARATOR = "_" * 20
 GCC_PATH = "/usr/bin/gcc"
 DEFAULT_ARGUMENTS = ["-Wall", "-Wextra", "-Werror", "-Wpedantic", "-O", "-g"]
 BUILD_DIR = "build" + os.sep
 IGNORE_FOLDERS = [".git", ".vscode", "build", "venv", "__pycache__", "mp2i-pv"]
-DEFAULT_PACKAGE_NAME = "Alexis_Rossfelder"
+DEFAULT_PACKAGE_NAME = "Alexis_Rossfelder_MP2I_{}.tgz"
 TP_FOLDER = "/home/alexi/Documents/MP2I/INFO/mp2i-pv/docs/TP2022-2023"
 EMPTY_TP = 3
 
@@ -59,7 +59,7 @@ def verbose(*args, level=1, **kwargs):
         3: red,
         0: print,
     }
-    if debug:
+    if _debug:
         levels[level](*args, **kwargs)
 
 
@@ -458,8 +458,11 @@ class CFile(metaclass=CFileSingleton):
         return f"CFile({self.filename})"
 
 
-def package_files(files, out_path):
+def package_files(files, out_path, pname):
     """Put every file and it's dependencies in the files list in the tgz file"""
+    if "{}" in out_path:
+        out_path = out_path.format(pname)
+
     with tarfile.open(out_path, "w:gz", compresslevel=9) as tar:
         # Add all the c files without the path
         for file in files:
@@ -518,13 +521,21 @@ def parse_args():
         "-R", "--no-run", action="store_true", help="Do not run the file"
     )
     parser.add_argument(
-        "-S", "--silent", action="store_true", help="Show no output from the scrip"
+        "-S", "--silent", action="store_true", help="Show no output from the script"
     )
     parser.add_argument(
         "-v", "--verbose", action="store_true", help="Show verbose output"
     )
     parser.add_argument("-o", "--output", help="Path to the output file")
-    parser.add_argument("-p", "--package", help="Zip the files into a tgz file")
+    parser.add_argument(
+        "-p", "--package", action="store_true", help="Zip the files into a tgz file"
+    )
+    parser.add_argument(
+        "--package-file",
+        action="store",
+        default=DEFAULT_PACKAGE_NAME,
+        help="The name of the package file",
+    )
     return parser.parse_args()
 
 
@@ -536,6 +547,7 @@ def main():
     _silent = parsed.silent
 
     parsed.files = list(parsed.files)
+    archive_pname = "TP"
 
     if parsed.files == ["Current directory"]:
         parsed.files = [os.getcwd()]
@@ -543,6 +555,7 @@ def main():
     if len(parsed.files) == 1:
         if os.path.isdir(parsed.files[0]):
             verbose("Directory detected", level=2)
+            archive_pname = os.path.basename(os.path.normpath(parsed.files[0]))
             files = []
             # Walk the directory and add all the files
             for root, _, filenames in os.walk(parsed.files[0]):
@@ -559,7 +572,7 @@ def main():
 
     if parsed.package:
         files = [CFile(f) for f in parsed.files]
-        package_files(files, parsed.package)
+        package_files(files, parsed.package_file, archive_pname)
     for file in parsed.files:
         if parsed.output:
             cfile = CFile(file, parsed.output)
