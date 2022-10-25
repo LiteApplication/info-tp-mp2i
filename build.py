@@ -1,9 +1,11 @@
 #!/usr/bin/python
 import argparse
 import datetime
+from functools import reduce
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import tarfile
 import time
@@ -63,13 +65,13 @@ def verbose(*args, level=1, **kwargs):
         levels[level](*args, **kwargs)
 
 
-def get_tp_list(path: str):
+def get_tp_list(path: str) -> dict[int, str]:
     lst = [
         os.path.join(TP_FOLDER, p)
         for p in os.listdir(path) + [""] * EMPTY_TP
         if "TP" in p
     ]
-    result = [""] * len(lst)
+    result = dict()
     not_found = list()
     for tp in lst:
         source = ""
@@ -80,44 +82,42 @@ def get_tp_list(path: str):
             if len(files) == 1:
                 source = os.path.join(tp, files[0])
             else:
-                verbose("Unable to get the source of the TP automatically", level=3)
+                verbose(
+                    f"Unable to get the source of {os.path.basename(tp)} automatically",
+                    level=3,
+                )
         if source != "":
-            if (x := re.match(r"\# TP(\d*) :", open(source).readline())) and int(
-                x.group(1)
-            ) - 1 in range(0, len(lst)):
-                result[int(x.group(1)) - 1] = tp
+            if x := re.match(r"\# TP(\d+) :", open(source).readline()):
+                result[int(x.group(1))] = tp
             else:
                 not_found.append(tp)
         else:
             not_found.append(tp)
-    print(json.dumps(not_found, indent=2), json.dumps(lst, indent=2))
-    for nf in not_found:
-        for i, tp in enumerate(result):
-            if tp == "":
-                result[i] = nf
-                break
+
+    for i, tp in enumerate(not_found):
+        result[len(result) + min(result)] = tp
     return result
 
 
-def select_tp(path: str) -> str:
-    lst = get_tp_list(path)
+def select_tp(path: str) -> tuple[str, int]:
+    tp_dict = get_tp_list(path)
 
     print("Please select the file to import :")
-    for i, t in enumerate(lst):
-        print(f"\t{i + 1} - {os.path.basename(t).replace('_', ' ')}")
+    for i in sorted(tp_dict.keys()):
+        print(f"\t{i} - {os.path.basename(tp_dict[i]).replace('_', ' ')}")
     try:
         result = int(input("Select one : "))
-        assert result - 1 in range(0, len(lst))
+        assert result in tp_dict
     except (KeyboardInterrupt, ValueError, AssertionError):
         print("\nAborting ...")
         exit()
-    p = lst[result - 1]
+    p = tp_dict[result]
     if os.path.exists(os.path.join(p, os.path.basename(p).lower() + ".md")):
-        return os.path.join(p, os.path.basename(p).lower() + ".md")
+        return os.path.join(p, os.path.basename(p).lower() + ".md"), result
     else:
         files = [f for f in os.listdir(p) if f.lower().endswith(".md")]
         if len(files) == 1:
-            return os.path.join(p, files[0])
+            return os.path.join(p, files[0]), result
         elif len(files) > 1:
             print("Please select the file to use :")
             for i, t in enumerate(files):
@@ -128,14 +128,14 @@ def select_tp(path: str) -> str:
             except (KeyboardInterrupt, ValueError, AssertionError):
                 print("\nAborting ...")
                 exit()
-            return os.path.join(p, files[result - 1])
+            return os.path.join(p, files[result - 1]), result
         else:
             print("No MD file associated with this TP.")
-            return ""
+            return "", 0
 
 
 def read_md_tp(path: str) -> dict[str, list[str]]:
-    result = dict()
+    result = {"Introduction": []}
     current_part = "Introduction"
     with open(path, "r") as f:
         for line in f:
@@ -144,11 +144,53 @@ def read_md_tp(path: str) -> dict[str, list[str]]:
                 result[current_part] = []
             elif x := re.match(r"\[.*(?:\.c|\.h)\]\((.*)\)", line):
                 result[current_part].append(x.group(1))
+    for k, v in list(result.items()):
+        if len(v) == 0:
+            del result[k]
     return result
 
 
-# print(read_md_tp(select_tp(TP_FOLDER)))
-# exit()
+def prepare_folder(
+    tp_path: str, files: list[str], tp_num: int, dest_folder: str
+) -> None:
+    tp_folder = f"{dest_folder}{os.sep}TP{tp_num:02d}"
+    if os.path.exists(tp_folder):
+        verbose(f"Did not create {tp_folder} : Already exists")
+    else:
+        os.mkdir(tp_folder)
+        verbose(f"Created {tp_folder}")
+    for f in files:
+        if os.path.exists(os.path.join(tp_folder, os.path.basename(f))):
+            verbose(f"Did not copy {f} : Already exists")
+        else:
+            shutil.copy(os.path.join(os.path.dirname(tp_path), f), tp_folder)
+            verbose(f"Copied {f} to {tp_folder}")
+
+
+def select_files(tp_path: str) -> list[str]:
+    tp_dict = read_md_tp(tp_path)
+    print("Please select the categories to import :")
+    for i, k in enumerate(tp_dict.keys()):
+        print(f"\t{i + 1} - {k}")
+    try:
+        result = [
+            int(x) for x in input("Select one or more (separated by spaces): ").split()
+        ]
+        assert all([x - 1 in range(0, len(tp_dict)) for x in result])
+    except (KeyboardInterrupt, ValueError, AssertionError):
+        print("\nAborting ...")
+        exit()
+    return reduce(
+        lambda x, y: x + y, [tp_dict[list(tp_dict.keys())[i - 1]] for i in result]
+    )
+
+
+def main_init(tp_folder: str, dest_folder: str) -> None:
+    tp_path, tp_num = select_tp(tp_folder)
+    if tp_path == "":
+        exit()
+    files = select_files(tp_path)
+    prepare_folder(tp_path, files, tp_num, dest_folder)
 
 
 class CFileSingleton(type):
@@ -536,6 +578,9 @@ def parse_args():
         default=DEFAULT_PACKAGE_NAME,
         help="The name of the package file",
     )
+    parser.add_argument(
+        "-i", "--init", action="store_true", help="Initialize a TP folder"
+    )
     return parser.parse_args()
 
 
@@ -551,6 +596,16 @@ def main():
 
     if parsed.files == ["Current directory"]:
         parsed.files = [os.getcwd()]
+
+    if parsed.init:
+        if not len(parsed.files) == 1 and os.path.isdir(parsed.files[0]):
+            parsed.files = [os.getcwd()]
+            verbose(
+                f"You must select an existing folder for the root of the TP folders. Using {parsed.files[0]}",
+                level=3,
+            )
+        main_init(TP_FOLDER, parsed.files[0])
+        exit()
 
     if len(parsed.files) == 1:
         if os.path.isdir(parsed.files[0]):
