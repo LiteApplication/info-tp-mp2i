@@ -1,7 +1,6 @@
 #!/usr/bin/python
 import argparse
 import datetime
-from functools import reduce
 import os
 import re
 import shlex
@@ -9,12 +8,22 @@ import shutil
 import subprocess
 import tarfile
 import time
-import json
+from functools import reduce
 
 import colorama
 
-_silent = False
+HEADER_SEPARATOR = "_" * 20
+GCC_PATH = "/usr/bin/gcc"
+DEFAULT_ARGUMENTS = ["-Wall", "-Wextra", "-Werror", "-Wpedantic", "-O", "-g"]
+BUILD_DIR = "build" + os.sep
+IGNORE_FOLDERS = [".git", ".vscode", "build", "venv", "__pycache__", "mp2i-pv"]
+DEFAULT_PACKAGE_NAME = "Alexis_Rossfelder_MP2I_{}.tgz"
+TP_FOLDER = "/home/alexi/Documents/MP2I/INFO/mp2i-pv/docs/TP2022-2023"
+EMPTY_TP = 3
 
+
+_silent = False
+_debug = False
 
 _print = print
 
@@ -40,18 +49,6 @@ def gray(*args, end="\n", **kwargs):
     print(colorama.Fore.LIGHTBLACK_EX, end="")
     print(*args, end="", **kwargs)
     print(colorama.Fore.RESET, end=end)
-
-
-_debug = False
-
-HEADER_SEPARATOR = "_" * 20
-GCC_PATH = "/usr/bin/gcc"
-DEFAULT_ARGUMENTS = ["-Wall", "-Wextra", "-Werror", "-Wpedantic", "-O", "-g"]
-BUILD_DIR = "build" + os.sep
-IGNORE_FOLDERS = [".git", ".vscode", "build", "venv", "__pycache__", "mp2i-pv"]
-DEFAULT_PACKAGE_NAME = "Alexis_Rossfelder_MP2I_{}.tgz"
-TP_FOLDER = "/home/alexi/Documents/MP2I/INFO/mp2i-pv/docs/TP2022-2023"
-EMPTY_TP = 3
 
 
 def verbose(*args, level=1, **kwargs):
