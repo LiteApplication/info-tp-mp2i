@@ -100,10 +100,15 @@ def select_tp(path: str) -> tuple[str, int]:
     tp_dict = get_tp_list(path)
 
     print("Please select the file to import :")
+    i = 0
     for i in sorted(tp_dict.keys()):
         print(f"\t{i} - {os.path.basename(tp_dict[i]).replace('_', ' ')}")
     try:
-        result = int(input("Select one : "))
+        result = input(f"Select one [{i}]: ")
+        if result == "":
+            result = i
+        else:
+            result = int(result)
         assert result in tp_dict
     except (KeyboardInterrupt, ValueError, AssertionError):
         print("\nAborting ...")
@@ -171,9 +176,14 @@ def select_files(tp_path: str) -> list[str]:
         print(f"\t{i + 1} - {k}")
     try:
         result = [
-            int(x) for x in input("Select one or more (separated by spaces): ").split()
+            int(x)
+            for x in input(
+                f"Select one or more (separated by spaces) [{i + 1}]: "
+            ).split()
         ]
         assert all([x - 1 in range(0, len(tp_dict)) for x in result])
+        if len(result) == 0:
+            result = [len(tp_dict)]
     except (KeyboardInterrupt, ValueError, AssertionError):
         print("\nAborting ...")
         exit()
