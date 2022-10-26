@@ -13,6 +13,7 @@ import sys
 import tarfile
 import time
 from functools import reduce
+from typing import Any
 
 import colorama
 import pygments
@@ -23,13 +24,14 @@ import pygments.lexers
 HEADER_SEPARATOR = "_" * 20
 GCC_PATH = "/usr/bin/gcc"
 DEFAULT_ARGUMENTS = ["-Wall", "-Wextra", "-Werror", "-Wpedantic", "-O", "-g"]
-BUILD_DIR = "build" + os.sep
 IGNORE_FOLDERS = [".git", ".vscode", "build", "venv", "__pycache__", "mp2i-pv"]
 DEFAULT_PACKAGE_NAME = "Alexis_Rossfelder_MP2I_{}.tgz"
 TP_FOLDER = "/home/alexi/Documents/MP2I/INFO/mp2i-pv/docs/TP2022-2023"
 DEFAULT_CWD = "/home/alexi/Documents/MP2I/INFO"
+BUILD_DIR = os.path.join(DEFAULT_CWD, "build") + os.sep
 UPDATE_COMMAND = ["git", "pull", "origin", "main", "--rebase"]
 EMPTY_TP = 3
+VSCODE_PATH = "/usr/bin/code"
 
 
 ## Global variables
@@ -119,7 +121,12 @@ def latex_format(string: str) -> str:
     return string
 
 
-def print_exercises(ex_num: int, ex_title: str, ex_lines: list[str]) -> None:
+def clear_screen() -> None:
+    """Clear the terminal screen"""
+    os.system("cls" if os.name == "nt" else "clear")
+
+
+def print_exercises(ex_num: str, ex_title: str, ex_lines: list[str]) -> None:
     color(
         f"\t Exercise {ex_num} - {ex_title} ",
         color=colorama.Back.BLACK + colorama.Style.BRIGHT,
@@ -179,6 +186,36 @@ def print_exercises(ex_num: int, ex_title: str, ex_lines: list[str]) -> None:
                 )
             line = latex_format(line)  # Format the latex code
         print(line, end="")
+
+
+## IDE functions
+def open_ide(tp_path: str, file: str) -> None:
+    # Open vscode
+    if not os.path.exists(VSCODE_PATH):
+        red(f"VSCode not found at {VSCODE_PATH}")
+        exit(1)
+    subprocess.run([VSCODE_PATH, tp_path, file])
+
+
+def open_file_from_ex(
+    exercises_group: list[tuple[str, str, list[str]]], ex_num: str, tp_source: str
+) -> str:
+    # Each exercise is a tuple (ex_num, ex_title, ex_content) where ex_content is a list of lines
+
+    for ex in exercises_group:
+        if str(ex[0]) == str(ex_num):
+            for line in ex[2]:
+                if x := re.match(r"\[.*(?:\.c|\.h)\]\((.*)\)", line):
+                    if not os.path.exists(os.path.basename(x.group(1))):
+                        shutil.copyfile(
+                            os.path.join(tp_source, x.group(1)),
+                            os.path.basename(x.group(1)),
+                        )  # Copy the file to the current folder (we chdir to the good folder earlier)
+                    open_ide(".", os.path.basename(x.group(1)))
+                    return os.path.basename(
+                        x.group(1)
+                    )  # return the file that was opened
+    return ""
 
 
 ## TP folder automations functions
@@ -291,7 +328,7 @@ def read_md_tp(path: str) -> dict[str, list[str]]:
     return result
 
 
-def read_md_tp_ex(path: str) -> dict[str, list[tuple[int, str, list[str]]]]:
+def read_md_tp_ex(path: str) -> dict[str, list[tuple[str, str, list[str]]]]:
     # Read the file and get the exercises associated with each part
     result = {"Introduction": []}
     current_part = "Introduction"
@@ -308,7 +345,6 @@ def read_md_tp_ex(path: str) -> dict[str, list[tuple[int, str, list[str]]]]:
                         (current_ex, current_title, current_content_lines.copy())
                     )
                     current_content_lines.clear()
-                    print(current_part, current_title, current_ex)
 
                 current_part = x.group(1)
                 result[current_part] = []
@@ -319,10 +355,9 @@ def read_md_tp_ex(path: str) -> dict[str, list[tuple[int, str, list[str]]]]:
                         (current_ex, current_title, current_content_lines.copy())
                     )
                     current_content_lines.clear()
-                    print(current_part, current_title, current_ex)
 
                 current_ex = x.group(1)
-                current_title = x.group(2)
+                current_title = x.group(2).strip()
                 saving = True
             elif saving:
                 current_content_lines.append(line)
@@ -331,13 +366,11 @@ def read_md_tp_ex(path: str) -> dict[str, list[tuple[int, str, list[str]]]]:
                     (current_ex, current_title, current_content_lines.copy())
                 )
                 current_content_lines.clear()
-                print(current_part, current_title, current_ex)
 
         if saving:
             result[current_part].append(
                 (current_ex, current_title, current_content_lines)
             )
-            print(current_part, current_title, current_ex)
 
     for k, v in list(result.items()):
         if len(v) == 0:
@@ -362,9 +395,8 @@ def prepare_folder(
             verbose(f"Copied {f} to {tp_folder}")
 
 
-def select_files(tp_path: str) -> list[str]:
+def select_categories(tp_dict: dict[str, list[Any]]) -> tuple[list[Any], list[int]]:
     # read the md file
-    tp_dict = read_md_tp(tp_path)
     print("Please select the categories to import :")
     i = -2
     for i, k in enumerate(tp_dict.keys()):
@@ -381,10 +413,17 @@ def select_files(tp_path: str) -> list[str]:
             result = [len(tp_dict)]
     except (KeyboardInterrupt, ValueError, AssertionError):
         print("\nAborting ...")
-        return []
-    return reduce(
-        lambda x, y: x + y, [tp_dict[list(tp_dict.keys())[i - 1]] for i in result]
+        return [], []
+    return (
+        reduce(
+            lambda x, y: x + y, [tp_dict[list(tp_dict.keys())[i - 1]] for i in result]
+        ),
+        result,
     )
+
+
+def select_files(tp_path):
+    return select_categories(read_md_tp(tp_path))[0]
 
 
 ## TP coding related functions
@@ -431,7 +470,14 @@ class CFile(metaclass=CFileSingleton):
             out = os.path.join(out, os.path.splitext(os.path.basename(filename))[0])
 
         self.out = out
+        self._provided_name = filename
 
+        self.reload()
+
+    def __str__(self) -> str:
+        return self.filename
+
+    def reload(self):
         self._parsed = False
         self._built = False
         self._valid = True
@@ -442,7 +488,6 @@ class CFile(metaclass=CFileSingleton):
         self._package = []
         self._authors = ["+Alexis Rossfelder, MP2I"]
         self._run_args = []
-        self._provided_name = filename
 
         if not os.path.exists(self._provided_name):
             self._valid = False
@@ -460,9 +505,6 @@ class CFile(metaclass=CFileSingleton):
             self._args.extend(DEFAULT_ARGUMENTS)
             self._files.append("+" + self._provided_name)
             verbose(f"Found {self}")
-
-    def __str__(self) -> str:
-        return self.filename
 
     def _get_settings(self):
         if not self._valid:
@@ -876,17 +918,91 @@ def main(args: list[str] | None = None, interactive: bool = False):
 
 
 def interactive_shell():
+    os.chdir(DEFAULT_CWD)
+    # Ask the user to select a TP
+    tp_md, tp_num = select_tp(TP_FOLDER)
+    os.chdir(f"TP{tp_num:02d}")
+    tp_source = os.path.dirname(tp_md)
+    # Ask the user to select a level
+    exercises, _ = select_categories(read_md_tp_ex(tp_md))
+    if not exercises:
+        color("No exercises found", color=colorama.Fore.RED)
+        return
+
     color(">>> Welcome to the productive mode <<<", color=colorama.Fore.BLUE)
     color(
         "Type 'help' or 'h' for a list of commands", color=colorama.Fore.LIGHTMAGENTA_EX
     )
-    os.chdir(DEFAULT_CWD)
-    ex = read_md_tp_ex(
-        "/home/alexi/Documents/MP2I/INFO/mp2i-pv/docs/TP2022-2023/TP_pointeurs_et_tableaux/tp_pointeurs_et_tableaux.md"
-    )["Première étoile"]
-    for e in ex:
-        print_exercises(*e)
-    main_init(TP_FOLDER, DEFAULT_CWD)
+    color(
+        "Type 'exit' or 'quit' to exit the shell",
+        color=colorama.Fore.LIGHTMAGENTA_EX,
+    )
+
+    def list_ex():
+        for exercise in exercises:
+            color(
+                f"Type 's {exercise[0]}' to go to the exercise '{exercise[1]}'",
+                color=colorama.Fore.CYAN,
+            )
+
+    ex_by_num = {str(ex[0]): ex for ex in exercises}
+    current_ex = ("0", "", [])
+    current_file = None
+    command: str = ""
+    multiple = ["list"]
+    while True:
+        if multiple:
+            command = multiple.pop(0)
+        else:
+            command = input(f"{current_ex[1]} > ").strip()
+        match command.split():
+            case ["list"] | ["l"]:
+                list_ex()
+            case ["select", num] | ["s", num]:
+                if num not in ex_by_num:
+                    color(f"Exercise {num} does not exist", color=colorama.Fore.RED)
+                    continue
+                current_ex = ex_by_num[num]
+                color(
+                    f"Going to exercise {current_ex[0]}: {current_ex[1]}",
+                    color=colorama.Fore.LIGHTGREEN_EX,
+                )
+                current_file = CFile(open_file_from_ex(exercises, num, tp_source))
+            case ["run"] | ["r"]:
+                if current_file is None:
+                    color("No exercise selected", color=colorama.Fore.RED)
+                    continue
+                color(
+                    f"Running exercise {current_ex[0]}: {current_ex[1]}",
+                    color=colorama.Fore.LIGHTGREEN_EX,
+                )
+                current_file.reload()
+                current_file.run()
+            case ["print"] | ["p"]:
+                if current_ex[0] == "0":
+                    color("No exercise selected", color=colorama.Fore.RED)
+                    continue
+                print_exercises(*current_ex)  # type: ignore
+            case ["clear"] | ["c"]:
+                clear_screen()
+            case ["pwd"]:
+                print(f"Current directory: {os.getcwd()}")
+            case ["all"] | ["a"] | []:
+                multiple = ["clear", "print", "run"]
+
+            case ["help"] | ["h"]:
+                color("List of commands:", color=colorama.Fore.LIGHTMAGENTA_EX)
+                color(
+                    "list, l: List the exercises"
+                    "select, s: Select an exercise"
+                    "run, r, (default): Run the selected exercise"
+                    "pwd: Print the current directory"
+                    "help, h: Show this help message",
+                    color=colorama.Fore.LIGHTMAGENTA_EX,
+                )
+            case ["exit"] | ["quit"] | ["q"] | ["e"]:
+                color("Exiting...", color=colorama.Fore.LIGHTMAGENTA_EX)
+                break
 
 
 if __name__ == "__main__":
