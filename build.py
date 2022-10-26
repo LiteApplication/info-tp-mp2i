@@ -1,4 +1,6 @@
 #!/usr/bin/python
+
+## Imports
 import argparse
 import datetime
 import os
@@ -12,6 +14,8 @@ from functools import reduce
 
 import colorama
 
+
+## Constants
 HEADER_SEPARATOR = "_" * 20
 GCC_PATH = "/usr/bin/gcc"
 DEFAULT_ARGUMENTS = ["-Wall", "-Wextra", "-Werror", "-Wpedantic", "-O", "-g"]
@@ -23,21 +27,13 @@ UPDATE_COMMAND = ["git", "pull", "origin", "main", "--rebase"]
 EMPTY_TP = 3
 
 
+## Global variables
 _silent = False
 _debug = False
 
+
+## Logging functions
 _print = print
-
-
-def update_tp(exit_on_error=True):
-    verbose("Updating TP...")
-    code = subprocess.run(UPDATE_COMMAND, cwd=TP_FOLDER).returncode
-    if code != 0:
-        red(f"Failed to update TP ! (code: {code})")
-        if exit_on_error:
-            exit(code)
-    else:
-        verbose("TP updated !", level=2)
 
 
 def print(*args, **kwargs):
@@ -72,6 +68,18 @@ def verbose(*args, level=1, **kwargs):
     }
     if _debug:
         levels[level](*args, **kwargs)
+
+
+## TP folder automations functions
+def update_tp(exit_on_error=True):
+    verbose("Updating TP...")
+    code = subprocess.run(UPDATE_COMMAND, cwd=TP_FOLDER).returncode
+    if code != 0:
+        red(f"Failed to update TP ! (code: {code})")
+        if exit_on_error:
+            exit(code)
+    else:
+        verbose("TP updated !", level=2)
 
 
 def get_tp_list(path: str) -> dict[int, str]:
@@ -204,6 +212,7 @@ def select_files(tp_path: str) -> list[str]:
     )
 
 
+## TP coding related functions
 def main_init(tp_folder: str, dest_folder: str) -> None:
     tp_path, tp_num = select_tp(tp_folder)
     if tp_path == "":
@@ -212,6 +221,7 @@ def main_init(tp_folder: str, dest_folder: str) -> None:
     prepare_folder(tp_path, files, tp_num, dest_folder)
 
 
+## C files related functions
 class CFileSingleton(type):
     _instances = {}
 
@@ -519,6 +529,7 @@ class CFile(metaclass=CFileSingleton):
         return f"CFile({self.filename})"
 
 
+## Packaging
 def package_files(files, out_path, pname):
     """Put every file and it's dependencies in the files list in the tgz file"""
     if "{}" in out_path:
@@ -558,6 +569,7 @@ def package_files(files, out_path, pname):
                     verbose("Done", level=2)
 
 
+## Command line interface function
 def parse_args():
     parser = argparse.ArgumentParser(
         description="A simple C file builder and runner, with a simple syntax, and a simple way to package files",
@@ -672,4 +684,5 @@ def main():
 
 
 if __name__ == "__main__":
+
     main()
