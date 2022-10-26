@@ -19,6 +19,7 @@ BUILD_DIR = "build" + os.sep
 IGNORE_FOLDERS = [".git", ".vscode", "build", "venv", "__pycache__", "mp2i-pv"]
 DEFAULT_PACKAGE_NAME = "Alexis_Rossfelder_MP2I_{}.tgz"
 TP_FOLDER = "/home/alexi/Documents/MP2I/INFO/mp2i-pv/docs/TP2022-2023"
+UPDATE_COMMAND = ["git", "pull", "origin", "main", "--rebase"]
 EMPTY_TP = 3
 
 
@@ -26,6 +27,17 @@ _silent = False
 _debug = False
 
 _print = print
+
+
+def update_tp(exit_on_error=True):
+    verbose("Updating TP...")
+    code = subprocess.run(UPDATE_COMMAND, cwd=TP_FOLDER).returncode
+    if code != 0:
+        red(f"Failed to update TP ! (code: {code})")
+        if exit_on_error:
+            exit(code)
+    else:
+        verbose("TP updated !", level=2)
 
 
 def print(*args, **kwargs):
@@ -588,6 +600,9 @@ def parse_args():
     parser.add_argument(
         "-i", "--init", action="store_true", help="Initialize a TP folder"
     )
+    parser.add_argument(
+        "-U", "--update", action="store_true", help="Update the tp folder from git"
+    )
     return parser.parse_args()
 
 
@@ -600,6 +615,16 @@ def main():
 
     parsed.files = list(parsed.files)
     archive_pname = "TP"
+
+    if parsed.update:
+        only_command = (
+            not parsed.init
+            and parsed.files == ["Current directory"]
+            and not parsed.package
+        )
+        update_tp(only_command)
+        if only_command:
+            return
 
     if parsed.files == ["Current directory"]:
         parsed.files = [os.getcwd()]
