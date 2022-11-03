@@ -1,5 +1,17 @@
 #!/usr/bin/python
 
+# Code by Alexis Rossfelder <rossfelderalexis@gmail.com>
+# All rights reserved
+# License: no share no sell no edit without consent
+
+# THIS CODE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED
+# OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE ENTIRE RISK AS TO
+# THE QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU. SHOULD THE PROGRAM
+# PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY SERVICING, REPAIR OR
+# CORRECTION.
+
+
 ## Imports
 import argparse
 import datetime
@@ -15,6 +27,8 @@ import time
 from functools import reduce
 from typing import Any
 
+
+# Install these using pip
 import colorama
 import pygments
 import pygments.formatters
@@ -989,15 +1003,23 @@ def interactive_shell():
                 print(f"Current directory: {os.getcwd()}")
             case ["all"] | ["a"] | []:
                 multiple = ["clear", "print", "run"]
-
+            case ["update"] | ["u"]:
+                update_tp(False)
+                interactive_shell()
+                exit(0)
             case ["help"] | ["h"]:
                 color("List of commands:", color=colorama.Fore.LIGHTMAGENTA_EX)
                 color(
-                    "list, l: List the exercises"
-                    "select, s: Select an exercise"
-                    "run, r, (default): Run the selected exercise"
-                    "pwd: Print the current directory"
-                    "help, h: Show this help message",
+                    "list, l: List the exercises\n"
+                    "select, s: Select an exercise\n"
+                    "run, r: Run the selected exercise\n"
+                    "print, p: Print the selected exercise\n"
+                    "clear, c: Clear the screen\n"
+                    "pwd: Print the current directory\n"
+                    "all, a (default): Run all the commands\n"
+                    "update, u: Update the TP folder and restart the shell\n"
+                    "help, h: Print this message\n"
+                    "exit, quit: Exit the shell",
                     color=colorama.Fore.LIGHTMAGENTA_EX,
                 )
             case ["exit"] | ["quit"] | ["q"] | ["e"]:
