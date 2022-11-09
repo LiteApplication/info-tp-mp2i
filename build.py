@@ -203,33 +203,44 @@ def print_exercises(ex_num: str, ex_title: str, ex_lines: list[str]) -> None:
 
 
 ## IDE functions
-def open_ide(tp_path: str, file: str) -> None:
+def open_ide(tp_path: str, *files: str) -> None:
     # Open vscode
     if not os.path.exists(VSCODE_PATH):
         red(f"VSCode not found at {VSCODE_PATH}")
         exit(1)
-    subprocess.run([VSCODE_PATH, tp_path, file])
+    link_c_properties(tp_path)
+    subprocess.run([VSCODE_PATH, tp_path, *files])
 
 
-def open_file_from_ex(
+def link_c_properties(tp_path: str):
+    if not os.path.exists(os.path.join(tp_path, ".vscode")):
+        os.mkdir(os.path.join(tp_path, ".vscode"))
+    if not os.path.exists(os.path.join(tp_path, ".vscode", "c_cpp_properties.json")):
+        os.link(
+            os.path.join(DEFAULT_CWD, ".vscode", "c_cpp_properties.json"),
+            os.path.join(tp_path, ".vscode", "c_cpp_properties.json"),
+        )
+
+
+def open_files_from_ex(
     exercises_group: list[tuple[str, str, list[str]]], ex_num: str, tp_source: str
 ) -> str:
     # Each exercise is a tuple (ex_num, ex_title, ex_content) where ex_content is a list of lines
-
+    opened_files = []
     for ex in exercises_group:
         if str(ex[0]) == str(ex_num):
             for line in ex[2]:
-                if x := re.match(r"\[.*(?:\.c|\.h)\]\((.*)\)", line):
+                if x := re.match(r".*\[.*(?:\.c|\.h)\]\((.*)\).*", line):
                     if not os.path.exists(os.path.basename(x.group(1))):
                         shutil.copyfile(
                             os.path.join(tp_source, x.group(1)),
                             os.path.basename(x.group(1)),
                         )  # Copy the file to the current folder (we chdir to the good folder earlier)
-                    open_ide(".", os.path.basename(x.group(1)))
-                    return os.path.basename(
-                        x.group(1)
-                    )  # return the file that was opened
-    return ""
+
+                    opened_files.append(os.path.basename(x.group(1)))
+
+    open_ide(".", *opened_files)
+    return opened_files
 
 
 ## TP folder automations functions
@@ -334,7 +345,7 @@ def read_md_tp(path: str) -> dict[str, list[str]]:
             if x := re.match(r"\#\# (.*) -- ", line):
                 current_part = x.group(1)
                 result[current_part] = []
-            elif x := re.match(r"\[.*(?:\.c|\.h)\]\((.*)\)", line):
+            elif x := re.match(r".*\[.*(?:\.c|\.h)\]\((.*)\).*", line):
                 result[current_part].append(x.group(1))
     for k, v in list(result.items()):
         if len(v) == 0:
@@ -363,14 +374,17 @@ def read_md_tp_ex(path: str) -> dict[str, list[tuple[str, str, list[str]]]]:
                 current_part = x.group(1)
                 result[current_part] = []
                 saving = False
-            elif x := re.match(r"\#\#\# Exercice (\d+) : (.*)", line):
+            elif x := re.match(r"\#\#\# Exercice( \d{0,2})? : (.*)", line):
                 if saving:
                     result[current_part].append(
                         (current_ex, current_title, current_content_lines.copy())
                     )
                     current_content_lines.clear()
 
-                current_ex = x.group(1)
+                if len(x.groups()) == 3:
+                    current_ex = x.group(1).strip()
+                else:
+                    current_ex = 0
                 current_title = x.group(2).strip()
                 saving = True
             elif saving:
@@ -507,6 +521,9 @@ class CFile(metaclass=CFileSingleton):
             self._valid = False
             verbose(f"File {self._provided_name} does not exist", level=3)
 
+        # Check if the file is inside .vscode and ignore it if it is
+        elif ".vscode" in self._provided_name:
+            self._valid = False
         # Check if the file is a c file
         elif not os.path.isfile(self._provided_name):
             self._valid = False
@@ -789,8 +806,8 @@ def package_files(files, out_path, pname):
                     info = tar.gettarinfo(file)
                     info.name = os.path.basename(file)
                     info.mode = 0o666
-                    info.uname = cfile.basename
-                    info.gname = "Packaged files"
+                    info.uname = "Packaged File"
+                    info.gname = cfile.basename
                     info.mtime = time.time_ns() // 10**9
                     info.uid = 0
                     info.gid = 0
@@ -841,6 +858,9 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
         help="The name of the package file",
     )
     parser.add_argument(
+        "-r", "--run", action="store_true", help="Run the files before packaging."
+    )
+    parser.add_argument(
         "-i", "--init", action="store_true", help="Initialize a TP folder"
     )
     parser.add_argument(
@@ -886,7 +906,11 @@ def main(args: list[str] | None = None, interactive: bool = False):
         parsed.files = [os.getcwd()]
 
     if parsed.interactive:
-        interactive_shell()
+        try:
+            interactive_shell()
+        except (SystemExit, KeyboardInterrupt):
+            print("")
+            print("Exiting ...")
         return
 
     if parsed.init:
@@ -917,9 +941,10 @@ def main(args: list[str] | None = None, interactive: bool = False):
                             files.append(os.path.join(root, filename))
             parsed.files = files
 
-    if parsed.package:
+    if parsed.package and not parsed.run:
         files = [CFile(f) for f in parsed.files]
         package_files(files, parsed.package_file, archive_pname)
+        return
     for file in parsed.files:
         if parsed.output:
             cfile = CFile(file, parsed.output)
@@ -930,11 +955,19 @@ def main(args: list[str] | None = None, interactive: bool = False):
         elif not parsed.no_build:
             cfile.build(not parsed.no_header)
 
+    if parsed.package and parsed.run:
+        files = [CFile(f) for f in parsed.files]
+        package_files(files, parsed.package_file, archive_pname)
+
 
 def interactive_shell():
     os.chdir(DEFAULT_CWD)
     # Ask the user to select a TP
     tp_md, tp_num = select_tp(TP_FOLDER)
+    if tp_num == -1:
+        return
+    if not os.path.exists(f"TP{tp_num:02d}"):
+        os.mkdir(f"TP{tp_num:02d}")
     os.chdir(f"TP{tp_num:02d}")
     tp_source = os.path.dirname(tp_md)
     # Ask the user to select a level
@@ -963,7 +996,10 @@ def interactive_shell():
     current_ex = ("0", "", [])
     current_file = None
     command: str = ""
-    multiple = ["list"]
+    multiple = [
+        "list",
+        f"s {exercises[0][0]}",
+    ]  # list all exercises and go to the first one
     while True:
         if multiple:
             command = multiple.pop(0)
@@ -981,7 +1017,29 @@ def interactive_shell():
                     f"Going to exercise {current_ex[0]}: {current_ex[1]}",
                     color=colorama.Fore.LIGHTGREEN_EX,
                 )
-                current_file = CFile(open_file_from_ex(exercises, num, tp_source))
+                opened_files = open_files_from_ex(exercises, num, tp_source)
+                # Get the c files if they exist
+                c_opened_files = (
+                    x
+                    if (x := [f for f in opened_files if f.endswith(".c")])
+                    else opened_files
+                )
+                if len(c_opened_files) > 1:
+                    print(
+                        "There are multiple C files available for this exercise, select the one you want to build :"
+                    )
+                    for i, f in enumerate(c_opened_files):
+                        print(f"\t{i} - {f}")
+                    try:
+                        c_opened_files[0] = c_opened_files[
+                            int(input("Select one [0]: "))
+                        ]
+                    except (IndexError, ValueError):
+                        pass
+                # Ask the user to select the main file
+
+                if opened_files:
+                    current_file = CFile(c_opened_files[0])
             case ["run"] | ["r"]:
                 if current_file is None:
                     color("No exercise selected", color=colorama.Fore.RED)
