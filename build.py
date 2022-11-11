@@ -224,7 +224,7 @@ def link_c_properties(tp_path: str):
 
 def open_files_from_ex(
     exercises_group: list[tuple[str, str, list[str]]], ex_num: str, tp_source: str
-) -> str:
+) -> list[str]:
     # Each exercise is a tuple (ex_num, ex_title, ex_content) where ex_content is a list of lines
     opened_files = []
     for ex in exercises_group:
@@ -858,7 +858,10 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
         help="The name of the package file",
     )
     parser.add_argument(
-        "-r", "--run", action="store_true", help="Run the files before packaging."
+        "-r",
+        "--run",
+        action="store_true",
+        help="Run the files before packaging (overrides --no-run and --no-build if packaging).",
     )
     parser.add_argument(
         "-i", "--init", action="store_true", help="Initialize a TP folder"

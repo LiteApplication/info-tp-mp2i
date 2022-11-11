@@ -30,7 +30,7 @@ def ieee754(l: list) -> float:
     b = 2**10 - 1
 
     # Base case
-    if 0 < e-b < 2**11 - 1:
+    if 0 < e - b < 2**11 - 1:
         return ((-1) ** s) * (1 + m * (2**-52)) * (2 ** (e - b))
     # Special cases
     elif e == 0:
@@ -63,11 +63,7 @@ def main():
     print_list_f(l, convert_bin)
     print_list_f(l2, bin_to_dec)
 
-    print(
-        ieee754(
-            "0100000001010101010010000000000000000000000000000000000000000000"
-        )
-    )
+    print(ieee754("0100000001010101010010000000000000000000000000000000000000000000"))
 
 
 if __name__ == "__main__":
