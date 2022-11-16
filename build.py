@@ -476,7 +476,7 @@ class CFileSingleton(type):
 
 
 class CFile(metaclass=CFileSingleton):
-    def __init__(self, filename: str, out=None, base=None):
+    def __init__(self, filename: str, out=None, base=None, cwd=None):
 
         # Filename as absolute path
         self.filename = os.path.abspath(filename)
@@ -485,6 +485,8 @@ class CFile(metaclass=CFileSingleton):
 
         else:
             self.basename = base
+
+        self.cwd = cwd
 
         if out is None:
             if not os.path.exists(BUILD_DIR):
@@ -655,8 +657,11 @@ class CFile(metaclass=CFileSingleton):
             if date:
                 f.write(f"Date\t: {datetime.datetime.now().strftime('%d.%m.%Y')}\n")
             if self._run_args:
+                out_exec = self.out.replace(BUILD_DIR, '')
+                if not out_exec.startswith('/'):
+                    out_exec = './' + out_exec
                 f.write(
-                    f"Run \t: {self.out.replace(BUILD_DIR, '')} {' '.join(escaped_run_args)}\n"
+                    f"Run \t: {out_exec} {' '.join(escaped_run_args)}\n"
                 )
             f.write(HEADER_SEPARATOR + "\n")
             f.write("*/\n")
@@ -709,7 +714,7 @@ class CFile(metaclass=CFileSingleton):
                 return
         if all(False for a in self.run_args() if a.startswith("\\")):
             verbose(f"Running {self.out}")
-            code = subprocess.run([self.out] + self.run_args()).returncode
+            code = subprocess.run([self.out] + self.run_args(), cwd=self.cwd).returncode
         else:
             escaped_run_args = [
                 arg[1:] if arg.startswith("\\") else shlex.quote(arg)
@@ -926,9 +931,12 @@ def main(args: list[str] | None = None, interactive: bool = False):
         main_init(TP_FOLDER, parsed.files[0])
         return
 
+    dir_path = None
+
     if len(parsed.files) == 1:
         if os.path.isdir(parsed.files[0]):
             verbose("Directory detected", level=2)
+            dir_path = parsed.files[0]
             archive_pname = os.path.basename(os.path.normpath(parsed.files[0]))
             files = []
             # Walk the directory and add all the files
@@ -945,7 +953,7 @@ def main(args: list[str] | None = None, interactive: bool = False):
             parsed.files = files
 
     if parsed.package and not parsed.run:
-        files = [CFile(f) for f in parsed.files]
+        files = [CFile(f, cwd=dir_path) for f in parsed.files]
         package_files(files, parsed.package_file, archive_pname)
         return
     for file in parsed.files:
