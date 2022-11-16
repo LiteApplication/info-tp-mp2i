@@ -2,8 +2,8 @@
 ____________________
 Author	: Alexis Rossfelder, MP2I
 Command	: gcc -Wall -Wextra -Werror -Wpedantic -O -g serpent.c -o serpent
-Date	: 09.11.2022
-Run 	: serpent && convert -delay 1 -loop 0 serpent-*.ppm serpent.gif && rm -f serpent-*.ppm
+Date	: 16.11.2022
+Run 	: ./serpent && convert -delay 1 -loop 0 serpent-*.ppm serpent.gif && rm -f serpent-*.ppm
 ____________________
 */
 
@@ -131,8 +131,8 @@ bool **image(struct serpent *s, int width, int height)
   int middle_y = height / 2;
   for (int i = 0; i < s->taille; i++)
   {
-    if (s->tete - i > 0 && s->tete - i < width)
-      result[s->ecailles[i] + middle_y][s->tete - i] = true;
+    if (s->tete - i > 0 && s->tete - i - 1 < width)
+      result[s->ecailles[i] + middle_y][s->tete - i - 1] = true;
   }
   return result;
 }
@@ -158,6 +158,8 @@ void trajet(int size, int width, int height)
     }
     free(img);
   }
+
+  free_serpent(s);
   //#run: \&& convert -delay 1 -loop 0 \serpent-*.ppm serpent.gif \&& rm -f \serpent-*.ppm
   //#package: serpent.gif
 }
