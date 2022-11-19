@@ -38,19 +38,21 @@ import pygments.lexers
 HEADER_SEPARATOR = "_" * 20
 GCC_PATH = "/usr/bin/gcc"
 DEFAULT_ARGUMENTS = ["-Wall", "-Wextra", "-Werror", "-Wpedantic", "-O", "-g"]
+TP_FOLDER = "/home/alexi/Documents/MP2I/INFO/mp2i-pv/docs/TP2022-2023"
 IGNORE_FOLDERS = [".git", ".vscode", "build", "venv", "__pycache__", "mp2i-pv"]
 DEFAULT_PACKAGE_NAME = "Alexis_Rossfelder_MP2I_{}.tgz"
-TP_FOLDER = "/home/alexi/Documents/MP2I/INFO/mp2i-pv/docs/TP2022-2023"
 DEFAULT_CWD = "/home/alexi/Documents/MP2I/INFO"
 BUILD_DIR = os.path.join(DEFAULT_CWD, "build") + os.sep
 UPDATE_COMMAND = ["git", "pull", "origin", "main", "--rebase"]
 EMPTY_TP = 3
 VSCODE_PATH = "/usr/bin/code"
+DIR_RECURSION_LIMIT = 2
 
 
 ## Global variables
 _silent = False
 _debug = False
+_grabbed = False
 
 
 ## Logging functions
@@ -209,7 +211,11 @@ def open_ide(tp_path: str, *files: str) -> None:
         red(f"VSCode not found at {VSCODE_PATH}")
         exit(1)
     link_c_properties(tp_path)
-    subprocess.run([VSCODE_PATH, tp_path, *files])
+    n_env = os.environ.copy()
+    if "GRAB" not in n_env:
+        n_env["GRAB"] = str(os.getpid())
+
+    subprocess.run([VSCODE_PATH, tp_path, *files], env=n_env)
 
 
 def link_c_properties(tp_path: str):
@@ -373,15 +379,17 @@ def read_md_tp_ex(path: str) -> dict[str, list[tuple[str, str, list[str]]]]:
 
                 current_part = x.group(1)
                 result[current_part] = []
+                current_ex = 0
                 saving = False
             elif x := re.match(r"\#\#\# Exercice( \d{0,2})? : (.*)", line):
+                print(x.groups())
                 if saving:
                     result[current_part].append(
                         (current_ex, current_title, current_content_lines.copy())
                     )
                     current_content_lines.clear()
 
-                if len(x.groups()) == 3:
+                if len(x.groups()) == 2:
                     current_ex = x.group(1).strip()
                 else:
                     current_ex = 0
@@ -476,6 +484,10 @@ class CFileSingleton(type):
 
 
 class CFile(metaclass=CFileSingleton):
+    @classmethod
+    def reset(cls):
+        cls._instances = {}
+
     def __init__(self, filename: str, out=None, base=None, cwd=None):
 
         # Filename as absolute path
@@ -657,12 +669,10 @@ class CFile(metaclass=CFileSingleton):
             if date:
                 f.write(f"Date\t: {datetime.datetime.now().strftime('%d.%m.%Y')}\n")
             if self._run_args:
-                out_exec = self.out.replace(BUILD_DIR, '')
-                if not out_exec.startswith('/'):
-                    out_exec = './' + out_exec
-                f.write(
-                    f"Run \t: {out_exec} {' '.join(escaped_run_args)}\n"
-                )
+                out_exec = self.out.replace(BUILD_DIR, "")
+                if not out_exec.startswith("/"):
+                    out_exec = "./" + out_exec
+                f.write(f"Run \t: {out_exec} {' '.join(escaped_run_args)}\n")
             f.write(HEADER_SEPARATOR + "\n")
             f.write("*/\n")
 
@@ -922,12 +932,13 @@ def main(args: list[str] | None = None, interactive: bool = False):
         return
 
     if parsed.init:
-        if not len(parsed.files) == 1 and os.path.isdir(parsed.files[0]):
-            parsed.files = [os.getcwd()]
+        if not (len(parsed.files) == 1 and os.path.isdir(parsed.files[0])):
+            parsed.files = [DEFAULT_CWD]
             verbose(
-                f"You must select an existing folder for the root of the TP folders. Using {parsed.files[0]}",
+                f"You must select an existing folder for the root of the TP folders. Try {parsed.files[0]}",
                 level=3,
             )
+
         main_init(TP_FOLDER, parsed.files[0])
         return
 
@@ -939,8 +950,16 @@ def main(args: list[str] | None = None, interactive: bool = False):
             dir_path = parsed.files[0]
             archive_pname = os.path.basename(os.path.normpath(parsed.files[0]))
             files = []
+            root_max_len = -1
             # Walk the directory and add all the files
             for root, _, filenames in os.walk(parsed.files[0]):
+                if root_max_len == -1:
+                    root_max_len = len(root.split("/")) + DIR_RECURSION_LIMIT
+                elif len(root.split("/")) > root_max_len:
+                    verbose(
+                        f"Skipped '{root}' DIR_RECURSION_LIMIT = {DIR_RECURSION_LIMIT}"
+                    )
+                    continue
                 for ignored in IGNORE_FOLDERS:
                     if ignored in root:
                         verbose(f"Ignoring {root}", level=2)
@@ -1059,6 +1078,7 @@ def interactive_shell():
                     f"Running exercise {current_ex[0]}: {current_ex[1]}",
                     color=colorama.Fore.LIGHTGREEN_EX,
                 )
+                CFile.reset()
                 current_file.reload()
                 current_file.run()
             case ["print"] | ["p"]:
@@ -1097,5 +1117,5 @@ def interactive_shell():
 
 
 if __name__ == "__main__":
-    # interactive()
+    # interactive_shell()
     main(sys.argv[1:])
