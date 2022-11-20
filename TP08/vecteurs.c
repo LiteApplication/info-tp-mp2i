@@ -67,7 +67,7 @@ struct vec vec_towards(struct vec a, struct vec b, double d)
  * a : un vecteur
  * sortie : affiche le vecteur
  */
-void print_vec(char prefix[], struct vec a)
+void print_vec(struct vec a)
 {
-    printf("%s : (%f, %f)\n", prefix, a.x, a.y);
+    printf("(%f, %f)", a.x, a.y);
 }
