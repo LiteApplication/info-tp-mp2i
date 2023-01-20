@@ -38,10 +38,10 @@ import pygments.lexers
 HEADER_SEPARATOR = "_" * 20
 GCC_PATH = "/usr/bin/gcc"
 DEFAULT_ARGUMENTS = ["-Wall", "-Wextra", "-Werror", "-Wpedantic", "-O", "-g"]
-TP_FOLDER = "/home/alexi/Documents/MP2I/INFO/mp2i-pv/docs/TP2022-2023"
+TP_FOLDER = "/home/alexis/Documents/MP2I/INFO/mp2i-pv/docs/TP2022-2023"
 IGNORE_FOLDERS = [".git", ".vscode", "build", "venv", "__pycache__", "mp2i-pv"]
 DEFAULT_PACKAGE_NAME = "Alexis_Rossfelder_MP2I_{}.tgz"
-DEFAULT_CWD = "/home/alexi/Documents/MP2I/INFO"
+DEFAULT_CWD = "/home/alexis/Documents/MP2I/INFO"
 BUILD_DIR = os.path.join(DEFAULT_CWD, "build") + os.sep
 UPDATE_COMMAND = ["git", "pull", "origin", "main", "--rebase"]
 EMPTY_TP = 3
@@ -118,7 +118,8 @@ def latex_format(string: str) -> str:
     """Format a latex string to be printed in the terminal"""
     # fmt: off
     subscript = "₀₁₂₃₄₅₆₇₈₉"
-    latex_chars = {r"\forall": "∀",r"\exists": "∃",r"\in": "∈",r"\notin": "∉",r"\subset": "⊂",r"\subseteq": "⊆",r"\supset": "⊃",r"\supseteq": "⊇",r"\emptyset": "∅",r"\cap": "∩",r"\cup": "∪",r"\infty": "∞",r"\leq": "≤",r"\geq": "≥",r"\neq": "≠",r"\equiv": "≡",r"\approx": "≈",r"\pm": "±",r"\times": "×",r"\div": "÷",r"\cdot": "·",r"\circ": "∘",r"\angle": "∠",r"\nabla": "∇",r"\partial": "∂",r"\sum": "∑",r"\prod": "∏",r"\int": "∫",r"\to": "→",r"\gets": "←",r"\leftrightarrow": "↔",r"\leftarrow": "←",r"\rightarrow": "→",r"\Rightarrow": "⇒",r"\Leftarrow": "⇐",r"\Leftrightarrow": "⇔",r"\mapsto": "↦",r"\longmapsto": "⟼",r"\varnothing": "∅",r"\alpha": "α",r"\beta": "β",r"\gamma": "γ",r"\delta": "δ",r"\epsilon": "ε",r"\zeta": "ζ",r"\eta": "η",r"\theta": "θ",r"\iota": "ι",r"\kappa": "κ",r"\lambda": "λ",r"\mu": "μ",r"\nu": "ν",r"\xi": "ξ",r"\omicron": "ο",r"\pi": "π",r"\rho": "ρ",r"\sigma": "σ",r"\tau": "τ",r"\upsilon": "υ",r"\phi": "φ",r"\chi": "χ",r"\psi": "ψ",r"\omega": "ω",r"\Alpha": "Α",r"\Beta": "Β",r"\Gamma": "Γ",r"\Delta": "Δ",r"\Epsilon": "Ε",r"\Zeta": "Ζ",r"\Eta": "Η",r"\Theta": "Θ",r"\Iota": "Ι",r"\Kappa": "Κ",r"\Lambda": "Λ",r"\Mu": "Μ",r"\Nu": "Ν",r"\Xi": "Ξ",r"\Omicron": "Ο",r"\Pi": "Π",r"\Rho": "Ρ",r"\Sigma": "Σ",r"\Tau": "Τ",r"\Upsilon": "Υ",r"\Phi": "Φ",r"\Chi": "Χ",r"\Psi": "Ψ",r"\Omega": "Ω",}
+    latex_chars = {r"\forall": "∀",r"\exists": "∃",r"\in": "∈",r"\notin": "∉",r"\subset": "⊂",r"\subseteq": "⊆",r"\supset": "⊃",r"\supseteq": "⊇",r"\emptyset": "∅",r"\cap": "∩",r"\cup": "∪",r"\infty": "∞",r"\leq": "≤",r"\geq": "≥",r"\neq": "≠",r"\equiv": "≡",r"\approx": "≈",r"\pm": "±",r"\times": "×",r"\div": "÷",r"\cdot": "·",r"\circ": "∘",r"\angle": "∠",r"\nabla": "∇",r"\partial": "∂",r"\sum": "∑",r"\prod": "∏",r"\int": "∫",r"\to": "→",r"\gets": "←",r"\leftrightarrow": "↔",r"\leftarrow": "←",r"\rightarrow": "→",r"\Rightarrow": "⇒",r"\Leftarrow": "⇐",r"\Leftrightarrow": "⇔",r"\mapsto": "↦",r"\longmapsto": "⟼",r"\varnothing": "∅",r"\alpha": "α",r"\beta": "β",r"\gamma": "γ",r"\delta": "δ",r"\epsilon": "ε",r"\zeta": "ζ",r"\eta": "η",r"\theta": "θ",r"\iota": "ι",r"\kappa": "κ",r"\lambda": "λ",r"\mu": "μ",r"\nu": "ν",r"\xi": "ξ",r"\omicron": "ο",r"\pi": "π",r"\rho": "ρ",r"\sigma": "σ",r"\tau": "τ",r"\upsilon": "υ",r"\phi": "φ",r"\chi": "χ",r"\psi": "ψ",r"\omega": "ω",r"\Alpha": "Α",r"\Beta": "Β",r"\Gamma": "Γ",r"\Delta": "Δ",r"\Epsilon": "Ε",r"\Zeta": "Ζ",r"\Eta": "Η",r"\Theta": "Θ",r"\Iota": "Ι",r"\Kappa": "Κ",r"\Lambda": "Λ",r"\Mu": "Μ",r"\Nu": "Ν",r"\Xi": "Ξ",r"\Omicron": "Ο",r"\Pi": "Π",r"\Rho": "Ρ",r"\Sigma": "Σ",r"\Tau": "Τ",r"\Upsilon": "Υ",r"\Phi": "Φ",r"\Chi": "Χ",r"\Psi": "Ψ",r"\Omega": "Ω",
+        "_e": "ₑ", "_i": "ᵢ", "_j": "ⱼ", "_k": "ᵏ", "_n": "ⁿ", "_r": "ʳ", "_s": "ˢ", "_t": "ᵗ", "_x": "ˣ", "_y": "ʸ", "_z": "ᶻ",}
     functions = {r"\sqrt": "√",r"\frac": "÷",r"\sin": "sin",r"\cos": "cos",r"\tan": "tan",r"\arcsin": "arcsin",r"\arccos": "arccos",r"\arctan": "arctan",r"\sinh": "sinh",r"\cosh": "cosh",r"\tanh": "tanh",r"\ln": "ln",r"\log": "log",r"\exp": "exp"}
     superscript = "⁰¹²³⁴⁵⁶⁷⁸⁹"
     other_superscripts = {r"\prime": "′",r"\prime\prime": "″",r"^e": "ᵉ",r"^i": "ⁱ",r"^j": "ʲ",r"^k": "ᵏ"}
@@ -245,8 +246,9 @@ def open_files_from_ex(
 
                     opened_files.append(os.path.basename(x.group(1)))
 
+    yield opened_files  # We yield the opened files so we can use it but do not open the files yet
     open_ide(".", *opened_files)
-    return opened_files
+    yield opened_files
 
 
 ## TP folder automations functions
@@ -382,7 +384,6 @@ def read_md_tp_ex(path: str) -> dict[str, list[tuple[str, str, list[str]]]]:
                 current_ex = 0
                 saving = False
             elif x := re.match(r"\#\#\# Exercice( \d{0,2})? : (.*)", line):
-                print(x.groups())
                 if saving:
                     result[current_part].append(
                         (current_ex, current_title, current_content_lines.copy())
@@ -486,7 +487,11 @@ class CFileSingleton(type):
 class CFile(metaclass=CFileSingleton):
     @classmethod
     def reset(cls):
-        cls._instances = {}
+        verbose("Resetting CFile instances")
+        verbose("Found instances :")
+        for k, v in cls._instances.items():
+            verbose(f"\t{k[1]}")
+            v.reload()
 
     def __init__(self, filename: str, out=None, base=None, cwd=None):
 
@@ -556,16 +561,21 @@ class CFile(metaclass=CFileSingleton):
             return []
         with open(self.filename, "r") as f:
             for line_num, line in enumerate(f):
-                current_tag = "files:"
+                current_tag = "files:" if line.startswith("//#") else ""
                 line = line.strip()
-                if line.startswith("//#"):  # Ignore commented includes
+                if line.startswith(("//#", "// #")):  # Ignore commented includes
                     if line.startswith("//#include ") or line.startswith("//#define"):
                         continue
                     if line.startswith("//#ignore#"):
                         self._valid = False
                         verbose("Ignoring", self)
                         return []
-                    line = iter(line.replace("//#", "").strip().split())
+                    line = iter(
+                        line.replace("//#", "", 1)
+                        .replace("// #", "", 1)
+                        .strip()
+                        .split()
+                    )
                     for word in line:
                         if word.startswith('"'):
                             word = word[1:]
@@ -589,11 +599,16 @@ class CFile(metaclass=CFileSingleton):
                         ):
                             current_tag = word
                         else:
-                            yield word, current_tag
+                            if current_tag:
+                                yield word, current_tag
 
-    def _parse(self):
+    def _parse(self, completed: set = None):
         if self._parsed or not self._valid:
             return
+
+        if completed is None:
+            completed = set()
+        completed.add(self)
 
         tag_list = {
             "files:": self._files,
@@ -609,7 +624,22 @@ class CFile(metaclass=CFileSingleton):
             tag_list[tag].append(argument)
         if not self._valid:
             return
+
         self._parsed = True
+
+        # Recursive parsing
+        for file in self._files:
+            c = CFile(file[1:], cwd=self.cwd)
+            if c in completed:
+                continue
+            c._parse(completed=completed)
+            self._files.extend(c._files)
+            self._args.extend(c._args)
+            self._libs.extend(c._libs)
+            self._authors.extend(c._authors)
+            self._package.extend(c._package)
+            self._run_args.extend(c._run_args)
+
         verbose(f"Parsed {self}")
         if self._files != ["+" + self._provided_name]:
             verbose(f"Files: {' '.join(self._files)}")
@@ -722,17 +752,65 @@ class CFile(metaclass=CFileSingleton):
             if not self._built:
                 red("Build failed for :", self)
                 return
-        if all(False for a in self.run_args() if a.startswith("\\")):
+        if all(a.startswith("\\") for a in self.run_args()):
             verbose(f"Running {self.out}")
             code = subprocess.run([self.out] + self.run_args(), cwd=self.cwd).returncode
         else:
-            escaped_run_args = [
+            escaped_run_args = [self.out] + [
                 arg[1:] if arg.startswith("\\") else shlex.quote(arg)
                 for arg in self.run_args()
             ]
-            verbose(f"Running raw command : {self.out}", " ".join(escaped_run_args))
-            code = os.system(self.out + " " + " ".join(escaped_run_args))
+            verbose(f"Running raw command : ", " ".join(escaped_run_args))
+            if self.cwd is not None:
+                cd = f'cd "{self.cwd}" ;'
+                escaped_run_args.insert(0, cd)
+            code = os.system(" ".join(escaped_run_args))
         (red if code else green)(f"Exited with code : {code}")
+
+    def run_valgrind(self):
+        if not self._valid:
+            return False
+        # Save a list of the files in program's directory
+        if self.cwd:
+            files = os.listdir(self.cwd)
+        else:
+            files = os.listdir(os.path.dirname(self.filename))
+
+        # Run the program with valgrind
+        if all(a.startswith("\\") for a in self.run_args()):
+            verbose(f"Running {self.out} with valgrind")
+            code = subprocess.run(
+                ["valgrind", "--leak-check=full", self.out] + self.run_args(),
+                cwd=self.cwd,
+            ).returncode
+        else:
+            escaped_run_args = ["valgrind", "--leak-check=full", self.out] + [
+                arg[1:] if arg.startswith("\\") else shlex.quote(arg)
+                for arg in self.run_args()
+            ]
+            verbose(
+                f"Running raw command : ", " ".join(escaped_run_args), "with valgrind"
+            )
+            if self.cwd is None:
+                cd = f'cd "{os.path.dirname(self.filename)}" ;'
+            else:
+                cd = f'cd "{self.cwd}" ;'
+            escaped_run_args.insert(0, cd)
+            code = os.system(" ".join(escaped_run_args))
+
+        # Get the list of files created by valgrind and/or the program
+        if self.cwd:
+            new_files = os.listdir(self.cwd)
+        else:
+            new_files = os.listdir(os.path.dirname(self.filename))
+        new_files = [f for f in new_files if f not in files]
+
+        # Remove the files created by valgrind
+        for f in new_files:
+            if not f.endswith(
+                (".c", ".h")
+            ):  # Ignore source files if they were created somehow
+                os.remove(os.path.join(self.cwd, f))
 
     def add_header(
         self, author: list[str] | None = None, command: list[str] | None = None
@@ -752,16 +830,18 @@ class CFile(metaclass=CFileSingleton):
                 if not deduplicate or a[1:] not in applied:
                     applied.append(a[1:])
             elif a.startswith("^"):
-                try:
+                verbose(f"Removing {a[1:]} from list")
+                while a[1:] in applied:
+                    verbose(f"List before : {applied}")
                     applied.remove(a[1:])
-                except ValueError:
-                    verbose("Did not remove :", a[1:])
+
             elif a.startswith("="):
                 applied.clear()
                 applied.append(a[1:])
             else:
                 if a not in applied:
                     applied.append(a)
+        verbose(f"Applied list : {applied}")
         return applied
 
     def files(self):
@@ -1047,7 +1127,8 @@ def interactive_shell():
                     f"Going to exercise {current_ex[0]}: {current_ex[1]}",
                     color=colorama.Fore.LIGHTGREEN_EX,
                 )
-                opened_files = open_files_from_ex(exercises, num, tp_source)
+                opener = open_files_from_ex(exercises, num, tp_source)
+                opened_files = next(opener)
                 # Get the c files if they exist
                 c_opened_files = (
                     x
@@ -1066,10 +1147,28 @@ def interactive_shell():
                         ]
                     except (IndexError, ValueError):
                         pass
-                # Ask the user to select the main file
 
+                # Ask the user to select the main file
                 if opened_files:
+                    next(opener)  # This time actually open the files
                     current_file = CFile(c_opened_files[0])
+            case ["current"] | ["c"]:
+                if current_file:
+                    color(
+                        f"Current file is {current_file.filename}",
+                        color=colorama.Fore.LIGHTGREEN_EX,
+                    )
+                else:
+                    color("No current file", color=colorama.Fore.RED)
+            case ["current", file] | ["c", file]:
+                if os.path.exists(file):
+                    current_file = CFile(file)
+                else:
+                    color(f"File {file} does not exist", color=colorama.Fore.RED)
+
+            case ["ls"] | ["l"]:
+                print(" ".join(os.listdir()))
+
             case ["run"] | ["r"]:
                 if current_file is None:
                     color("No exercise selected", color=colorama.Fore.RED)
@@ -1086,12 +1185,23 @@ def interactive_shell():
                     color("No exercise selected", color=colorama.Fore.RED)
                     continue
                 print_exercises(*current_ex)  # type: ignore
-            case ["clear"] | ["c"]:
+            case ["clear"]:
                 clear_screen()
             case ["pwd"]:
                 print(f"Current directory: {os.getcwd()}")
             case ["all"] | ["a"] | []:
                 multiple = ["clear", "print", "run"]
+            case ["valgrind"] | ["v"]:
+                if current_file is None:
+                    color("No exercise selected", color=colorama.Fore.RED)
+                    continue
+                color(
+                    f"Running exercise {current_ex[0]}: {current_ex[1]}",
+                    color=colorama.Fore.LIGHTGREEN_EX,
+                )
+                CFile.reset()
+                current_file.reload()
+                current_file.run_valgrind()
             case ["update"] | ["u"]:
                 update_tp(False)
                 interactive_shell()
@@ -1101,11 +1211,14 @@ def interactive_shell():
                 color(
                     "list, l: List the exercises\n"
                     "select, s: Select an exercise\n"
+                    "current, c: Show the current exercise\n"
+                    "ls: List the files in the current directory\n"
                     "run, r: Run the selected exercise\n"
                     "print, p: Print the selected exercise\n"
-                    "clear, c: Clear the screen\n"
+                    "clear: Clear the screen\n"
                     "pwd: Print the current directory\n"
                     "all, a (default): Run all the commands\n"
+                    "valgrind, v: Run the selected exercise with valgrind\n"
                     "update, u: Update the TP folder and restart the shell\n"
                     "help, h: Print this message\n"
                     "exit, quit: Exit the shell",

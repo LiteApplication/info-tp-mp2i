@@ -1,10 +1,3 @@
-/*
-____________________
-Author	: Alexis Rossfelder, MP2I
-Command	: gcc -Wall -Wextra -Werror -Wpedantic -O -g tests_oiseaux.c oiseaux.c vecteurs.c -o tests_oiseaux -lm
-Date	: 19.11.2022
-____________________
-*/
 #include <math.h>
 #include <stdlib.h>
 #include <assert.h>

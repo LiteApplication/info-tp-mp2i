@@ -2,8 +2,8 @@
 ____________________
 Author	: Alexis Rossfelder, MP2I
 Command	: gcc -Wall -Wextra -Werror -Wpedantic -O -g oiseaux_4.c vecteurs.c -o oiseaux_4 -lm
-Date	: 19.11.2022
-Run 	: ./oiseaux_4 && convert -delay .1 -loop 0 'oiseaux_4-*.ppm' oiseaux_4.gif && rm oiseaux_4-*.ppm
+Date	: 23.11.2022
+Run 	: ./oiseaux_4 && convert -delay 6 -loop 0 -quality 95 'oiseaux_4-*.ppm' oiseaux_4.mp4 && rm oiseaux_4-*.ppm && code oiseaux_4.mp4
 ____________________
 */
 #include <stdio.h>
@@ -28,7 +28,7 @@ void ecrire_image(int n, bool **img, int largeur, int hauteur)
     FILE *file;
     char couleur[2][7] = {"1 1 1 ", "0 0 0 "};
 
-    sprintf(fichier, "oiseaux_4-%03d.ppm", n);
+    sprintf(fichier, "oiseaux_4-%04d.ppm", n);
     file = fopen(fichier, "w");
     fprintf(file, "P3\n%d %d\n1\n", largeur, hauteur);
     for (int j = 0; j < hauteur; j = j + 1)
@@ -69,7 +69,7 @@ void deplacement_oiseau(struct nuee *nuee, struct oiseau *o_in, struct oiseau *o
     struct vec v2 = vec_towards(o, ami, 0.05);
     struct vec v3 = vec_towards(o, ennemi, -0.03);
 
-    struct vec v = vec_add(v1, vec_add(v2, v3));
+    struct vec v = vec_mult(SPEED, vec_add(v1, vec_add(v2, v3)));
 
     o_out->x = o_in->x + v.x;
     o_out->y = o_in->y + v.y;
@@ -197,7 +197,7 @@ void free_image(bool **img)
 
 int main()
 {
-    //#run: \&& convert -delay .1 -loop 0 oiseaux_4-*.ppm oiseaux_4.gif \&& rm \oiseaux_4-*.ppm
+    //#run: \&& convert -delay 6 -loop 0 -quality 95 oiseaux_4-*.ppm oiseaux_4.mp4 \&& rm \oiseaux_4-*.ppm \&& code oiseaux_4.mp4
 
     // Initialisation
     struct nuee *n1 = init_nuee(300);
@@ -208,7 +208,7 @@ int main()
     {
         bool **img = image(n1);
         if (i % 30 == 27) // Pas de signification particulière
-            change_amities(n2);
+            change_amities(n1);
 
         ecrire_image(i, img, IMG_SIZE, IMG_SIZE);
         free_image(img);

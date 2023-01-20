@@ -1,10 +1,3 @@
-/*
-____________________
-Author	: Alexis Rossfelder, MP2I
-Command	: gcc -Wall -Wextra -Werror -Wpedantic -O -g vecteurs.c -o vecteurs
-Date	: 19.11.2022
-____________________
-*/
 #include "vecteurs.h"
 #include <math.h>
 #include <stdio.h>

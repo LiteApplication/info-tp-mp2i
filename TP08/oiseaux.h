@@ -5,6 +5,7 @@
 
 // On a enfin vu les define
 #define IMG_SIZE 300
+#define SPEED (double)0.5
 #define IMG_STEPS 200
 
 struct oiseau
