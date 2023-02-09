@@ -227,6 +227,11 @@ def link_c_properties(tp_path: str):
             os.path.join(DEFAULT_CWD, ".vscode", "c_cpp_properties.json"),
             os.path.join(tp_path, ".vscode", "c_cpp_properties.json"),
         )
+    if not os.path.exists(os.path.join(DEFAULT_CWD, ".vscode", "tasks.json")):
+        os.link(
+            os.path.join(DEFAULT_CWD, ".vscode", "tasks.json"),
+            os.path.join(tp_path, ".vscode", "tasks.json"),
+        )
 
 
 def open_files_from_ex(
