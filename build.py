@@ -37,7 +37,7 @@ import pygments.lexers
 ## Constants
 HEADER_SEPARATOR = "_" * 20
 GCC_PATH = "/usr/bin/gcc"
-DEFAULT_ARGUMENTS = ["-Wall", "-Wextra", "-Werror", "-Wpedantic", "-O", "-g"]
+DEFAULT_ARGUMENTS = ["-Wall", "-Wextra", "-Werror", "-Wpedantic", "-g"]
 TP_FOLDER = "/home/alexis/Documents/MP2I/INFO/mp2i-pv/docs/TP2022-2023"
 IGNORE_FOLDERS = [".git", ".vscode", "build", "venv", "__pycache__", "mp2i-pv"]
 DEFAULT_PACKAGE_NAME = "Alexis_Rossfelder_MP2I_{}.tgz"
@@ -488,7 +488,6 @@ class CFileSingleton(type):
             ).__call__(file, *args, **kwargs)
         return cls._instances[(cls, os.path.abspath(file))]
 
-
 class CFile(metaclass=CFileSingleton):
     @classmethod
     def reset(cls):
@@ -499,7 +498,6 @@ class CFile(metaclass=CFileSingleton):
             v.reload()
 
     def __init__(self, filename: str, out=None, base=None, cwd=None):
-
         # Filename as absolute path
         self.filename = os.path.abspath(filename)
         if base is None:
