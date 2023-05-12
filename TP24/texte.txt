@@ -1,0 +1,7 @@
+L'écureuil se mit à rire. 
+- Tu as peur ? dit-il.
+- Pas du tout, répondit Jean-Claude. 
+Je me demande seulement comment tu as fait pour monter sur cet arbre. 
+- Oh ! c'est très simple, répondit l'écureuil. 
+Je suis monté sur une branche et puis sur une autre branche et ainsi de suite. 
+Je suis un écureuil récursif.
