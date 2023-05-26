@@ -1,9 +1,9 @@
 /*
 ____________________
 Author	: Alexis Rossfelder, MP2I
-Command	: gcc -Wall -Wextra -Werror -Wpedantic -g -Wno-overflow /home/alexis/Documents/MP2I/INFO/TP21/steganographie.c -o ste
-Date	: 20.04.2023
-Run 	: ./ste secret.pgm lol
+Command	: gcc -Wall -Wextra -Werror -Wpedantic -g -Wno-overflow /home/alexis/Documents/MP2I/INFO/TP21/steganographie.c -o steganographie
+Date	: 12.05.2023
+Run 	: ./steganographie secret.pgm lol
 ____________________
 */
 
